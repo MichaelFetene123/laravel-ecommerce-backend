@@ -1,0 +1,75 @@
+services:
+  # Laravel App (PHP Built-in Server + Filament)
+  laravel.test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app:latest
+    container_name: laravel_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      WWWUSER: "${WWWUSER:-1000}"
+      LARAVEL_SAIL: 1
+    volumes:
+      - .:/var/www/html
+    networks:
+      - app_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Redis for Caching and Queues
+  redis:
+    image: redis:alpine
+    container_name: laravel_redis
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: laravel_mysql
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-secret}"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: "${DB_DATABASE:-ecommerce}"
+      MYSQL_USER: "${DB_USERNAME:-sail}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-secret}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: 0
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD:-secret}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
