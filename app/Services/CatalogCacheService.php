@@ -310,7 +310,7 @@ class CatalogCacheService
     /**
      * Flush specific category cache.
      */
-    public function     flushCategory(Category|int $category): void
+    public function flushCategory(Category|int $category): void
     {
         $this->flushCategories();
 
