@@ -22,6 +22,25 @@ services:
       redis:
         condition: service_healthy
 
+  # Laravel Horizon (Redis Queue Manager & Auto-scaler)
+  horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app:latest
+    container_name: laravel_horizon
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    networks:
+      - app_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: php artisan horizon
+
   # Redis for Caching and Queues
   redis:
     image: redis:alpine
@@ -61,8 +80,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD:-secret}"]
       interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 20
+      start_period: 60s
 
 networks:
   app_network:

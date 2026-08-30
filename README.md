@@ -30,3 +30,20 @@ The application is structured around a robust e-commerce data model designed to 
 - **Framework**: Laravel
 - **Database**: SQLite (Development environment)
 - **Code Style**: Laravel Pint
+
+
+
+
+
+
+
+
+
+
+Summary Checklist for Production:
+✅ Set APP_ENV=production & QUEUE_CONNECTION=redis in .env.
+✅ Add your admin email to viewHorizon gate in 
+
+HorizonServiceProvider.php
+.
+✅ Run php artisan horizon:terminate after each deployment.
