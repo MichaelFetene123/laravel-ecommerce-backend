@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\CustomerOrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
@@ -22,5 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'me'])->name('api.user');
     Route::get('/addresses', [AddressController::class, 'index'])->name('api.addresses.index');
     Route::post('/addresses', [AddressController::class, 'store'])->name('api.addresses.store');
+    Route::get('/orders', [CustomerOrderController::class, 'index'])->name('api.orders.index');
+    Route::get('/orders/{orderNumber}', [CustomerOrderController::class, 'show'])->name('api.orders.show');
     Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.checkout');
 });
