@@ -12,6 +12,7 @@ services:
     environment:
       WWWUSER: "${WWWUSER:-1000}"
       LARAVEL_SAIL: 1
+      PHP_CLI_SERVER_WORKERS: "${PHP_CLI_SERVER_WORKERS:-4}"
     volumes:
       - .:/var/www/html
     networks:
