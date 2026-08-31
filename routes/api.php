@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
@@ -19,5 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('/me', [AuthController::class, 'me'])->name('api.me');
     Route::get('/user', [AuthController::class, 'me'])->name('api.user');
+    Route::get('/addresses', [AddressController::class, 'index'])->name('api.addresses.index');
+    Route::post('/addresses', [AddressController::class, 'store'])->name('api.addresses.store');
     Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.checkout');
 });
