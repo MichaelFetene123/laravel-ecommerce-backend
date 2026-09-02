@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
+Route::post('/register', [AuthController::class, 'register'])->name('api.register');
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::get('/categories', [CategoryController::class, 'index'])->name('api.categories.index');
 Route::get('/products', [ProductController::class, 'index'])->name('api.products.index');
