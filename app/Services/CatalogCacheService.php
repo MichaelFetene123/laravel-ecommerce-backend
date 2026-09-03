@@ -120,7 +120,7 @@ class CatalogCacheService
             callback: function () use ($filters, $page, $perPage) {
                 $query = Product::query()
                     ->where('is_active', true)
-                    ->with(['category', 'defaultVariant', 'images']);
+                    ->with(['category', 'defaultVariant', 'variants', 'images']);
 
                 if (! empty($filters['category_id'])) {
                     $query->where('category_id', $filters['category_id']);
@@ -149,7 +149,7 @@ class CatalogCacheService
             ttl: self::DEFAULT_PRODUCT_TTL,
             callback: fn () => Product::query()
                 ->where('is_active', true)
-                ->with(['category', 'defaultVariant', 'images'])
+                ->with(['category', 'defaultVariant', 'variants', 'images'])
                 ->limit($limit)
                 ->get()
         );
