@@ -15,6 +15,8 @@ services:
       PHP_CLI_SERVER_WORKERS: "${PHP_CLI_SERVER_WORKERS:-4}"
     volumes:
       - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
+      - bootcache_data:/var/www/html/bootstrap/cache
     networks:
       - app_network
     depends_on:
@@ -33,6 +35,8 @@ services:
     restart: unless-stopped
     volumes:
       - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
+      - bootcache_data:/var/www/html/bootstrap/cache
     networks:
       - app_network
     depends_on:
@@ -93,3 +97,5 @@ volumes:
     driver: local
   redis_data:
     driver: local
+  vendor_data:
+  bootcache_data:
