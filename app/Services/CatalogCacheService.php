@@ -131,6 +131,8 @@ class CatalogCacheService
                     $query->where('title', 'like', "%{$search}%");
                 }
 
+                $query->orderBy('created_at', 'desc');
+
                 return $query->paginate(perPage: $perPage, page: $page);
             }
         );
