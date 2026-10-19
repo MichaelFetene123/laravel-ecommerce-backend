@@ -148,6 +148,15 @@ SVG;
         $categoriesMap = [];
 
         $hierarchy = [
+            'Fashion' => [
+                'slug' => 'fashion',
+                'image' => 'categories/fashion-apparel.svg',
+                'children' => [
+                    "Men's Clothing" => ['slug' => 'mens-clothing', 'image' => 'categories/mens-clothing.svg'],
+                    "Women's Clothing" => ['slug' => 'womens-clothing', 'image' => 'categories/womens-clothing.svg'],
+                    'Footwear' => ['slug' => 'footwear', 'image' => 'categories/footwear.svg'],
+                ],
+            ],
             'Electronics' => [
                 'slug' => 'electronics',
                 'image' => 'categories/electronics.svg',
@@ -157,22 +166,18 @@ SVG;
                     'Audio & Headphones' => ['slug' => 'audio-headphones', 'image' => 'categories/audio-headphones.svg'],
                 ],
             ],
-            'Fashion & Apparel' => [
-                'slug' => 'fashion-apparel',
-                'image' => 'categories/fashion-apparel.svg',
-                'children' => [
-                    "Men's Clothing" => ['slug' => 'mens-clothing', 'image' => 'categories/mens-clothing.svg'],
-                    "Women's Clothing" => ['slug' => 'womens-clothing', 'image' => 'categories/womens-clothing.svg'],
-                    'Footwear' => ['slug' => 'footwear', 'image' => 'categories/footwear.svg'],
-                ],
-            ],
-            'Home & Living' => [
-                'slug' => 'home-living',
+            'Home' => [
+                'slug' => 'home',
                 'image' => 'categories/home-living.svg',
                 'children' => [
                     'Kitchen Appliances' => ['slug' => 'kitchen-appliances', 'image' => 'categories/kitchen-appliances.svg'],
                     'Smart Home' => ['slug' => 'smart-home', 'image' => 'categories/smart-home.svg'],
                 ],
+            ],
+            'Sports' => [
+                'slug' => 'sports',
+                'image' => 'categories/footwear.svg',
+                'children' => [],
             ],
         ];
 
