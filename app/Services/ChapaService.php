@@ -51,13 +51,38 @@ class ChapaService
     }
 
     /**
+     * Verify transaction with Chapa payment gateway.
+     *
+     * @param  string  $txRef
+     * @return array<string, mixed>
+     *
+     * @throws RuntimeException
+     */
+    public function verifyPayment(string $txRef): array
+    {
+        $response = Http::withToken($this->secretKey)
+            ->get("{$this->baseUrl}/transaction/verify/{$txRef}");
+
+        if (! $response->successful()) {
+            throw new RuntimeException('Chapa verification failed: '.$response->body());
+        }
+
+        return $response->json();
+    }
+
+    /**
      * Verify incoming webhook signature against configured secret.
      */
     public function verifyWebhookSignature(string $payload, ?string $signature): bool
     {
         $secret = config('services.chapa.webhook_secret', $this->secretKey);
+
+        if (empty($secret) || empty($signature) || empty($payload)) {
+            return false;
+        }
+
         $computedSignature = hash_hmac('sha256', $payload, (string) $secret);
 
-        return hash_equals($computedSignature, (string) $signature);
+        return hash_equals($computedSignature, trim((string) $signature));
     }
 }

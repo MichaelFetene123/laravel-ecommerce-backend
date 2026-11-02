@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessPaidOrder;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -32,7 +33,7 @@ class CheckoutController extends Controller
             'items.*.product_variant_id' => ['required', 'integer', 'exists:product_variants,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'billing_address_id' => ['nullable', 'integer', 'exists:addresses,id'],
-            'return_url' => ['required', 'url'],
+            'return_url' => ['nullable', 'url'],
             'first_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['nullable', 'string', 'max:100'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -76,6 +77,7 @@ class CheckoutController extends Controller
         $firstName = $validated['first_name'] ?? ($nameParts[0] ?? 'Customer');
         $lastName = $validated['last_name'] ?? ($nameParts[1] ?? 'User');
         $email = $validated['email'] ?? $user->email;
+        $returnUrl = $validated['return_url'] ?? (config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000')).'/checkout/callback');
 
         try {
             return DB::transaction(function () use (
@@ -90,7 +92,8 @@ class CheckoutController extends Controller
                 $txRef,
                 $firstName,
                 $lastName,
-                $email
+                $email,
+                $returnUrl
             ) {
                 // 1. Create Order
                 $order = Order::create([
@@ -138,7 +141,7 @@ class CheckoutController extends Controller
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'tx_ref' => $txRef,
-                    'return_url' => $validated['return_url'],
+                    'return_url' => $returnUrl,
                     'order_number' => $order->order_number,
                 ]);
 
@@ -157,6 +160,102 @@ class CheckoutController extends Controller
             return response()->json([
                 'message' => 'Payment initialization failed: '.$e->getMessage(),
             ], 422);
+        }
+    }
+
+    /**
+     * Verify payment transaction status and synchronize order state.
+     */
+    public function verify(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'tx_ref' => ['required', 'string'],
+        ]);
+
+        /** @var User $user */
+        $user = $request->user();
+        $txRef = $validated['tx_ref'];
+
+        $payment = Payment::where('tx_ref', $txRef)->first();
+        $order = $payment?->order ?? Order::where('tx_ref', $txRef)->first();
+
+        if (! $order || $order->user_id !== $user->id) {
+            return response()->json([
+                'message' => 'Order not found for this transaction reference.',
+            ], 404);
+        }
+
+        if (! $payment) {
+            $payment = Payment::where('order_id', $order->id)->latest()->first();
+        }
+
+        // If order is already confirmed as paid/completed, return immediately
+        if ($order->isPaid() || ($payment && $payment->status === 'success')) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Payment has already been successfully verified.',
+                'order' => $order->fresh()->load('items'),
+                'payment' => $payment?->fresh(),
+            ]);
+        }
+
+        // Synchronize state via server-to-server inquiry to Chapa
+        try {
+            $chapaData = $this->chapaService->verifyPayment($txRef);
+            $chapaStatus = strtolower((string) ($chapaData['data']['status'] ?? ($chapaData['status'] ?? '')));
+
+            return DB::transaction(function () use ($payment, $order, $chapaData, $chapaStatus) {
+                $lockedPayment = $payment ? Payment::where('id', $payment->id)->lockForUpdate()->first() : null;
+                $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first();
+
+                if ($lockedOrder->isPaid() || ($lockedPayment && $lockedPayment->status === 'success')) {
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Payment has already been successfully verified.',
+                        'order' => $lockedOrder->fresh()->load('items'),
+                        'payment' => $lockedPayment?->fresh(),
+                    ]);
+                }
+
+                $isSuccess = $chapaStatus === 'success';
+
+                if ($lockedPayment) {
+                    $lockedPayment->update([
+                        'status' => $isSuccess ? 'success' : 'failed',
+                        'chapa_reference' => $chapaData['data']['reference'] ?? null,
+                        'channel' => $chapaData['data']['method'] ?? ($chapaData['data']['payment_method'] ?? null),
+                        'webhook_payload' => $chapaData,
+                        'verified_at' => now(),
+                    ]);
+                }
+
+                if ($isSuccess) {
+                    $lockedOrder->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
+
+                    ProcessPaidOrder::dispatch($lockedOrder->id);
+                } else {
+                    $lockedOrder->update([
+                        'status' => 'failed',
+                    ]);
+                }
+
+                return response()->json([
+                    'status' => $isSuccess ? 'success' : 'failed',
+                    'message' => $isSuccess ? 'Payment verified successfully.' : 'Payment verification failed.',
+                    'order' => $lockedOrder->fresh()->load('items'),
+                    'payment' => $lockedPayment?->fresh(),
+                ]);
+            });
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'pending',
+                'message' => 'Could not verify payment status with gateway: '.$e->getMessage(),
+                'order' => $order->fresh()->load('items'),
+                'payment' => $payment?->fresh(),
+            ], 200);
         }
     }
 }

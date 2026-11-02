@@ -28,5 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/addresses', [AddressController::class, 'store'])->name('api.user.addresses.store');
     Route::get('/orders', [CustomerOrderController::class, 'index'])->name('api.orders.index');
     Route::get('/orders/{orderNumber}', [CustomerOrderController::class, 'show'])->name('api.orders.show');
+    Route::post('/orders/{orderNumber}/pay', [CustomerOrderController::class, 'pay'])->name('api.orders.pay');
+    Route::post('/orders/{orderNumber}/verify', [CustomerOrderController::class, 'verify'])->name('api.orders.verify');
     Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.checkout');
+    Route::post('/checkout/verify', [CheckoutController::class, 'verify'])->name('api.checkout.verify');
 });

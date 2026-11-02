@@ -43,28 +43,28 @@ class WebhookController extends Controller
             ], 400);
         }
 
-        $payment = Payment::where('tx_ref', $txRef)->first();
-        $order = $payment?->order ?? Order::where('tx_ref', $txRef)->first();
+        return DB::transaction(function () use ($txRef, $payload) {
+            $payment = Payment::where('tx_ref', $txRef)->lockForUpdate()->first();
+            $order = $payment?->order ?? Order::where('tx_ref', $txRef)->lockForUpdate()->first();
 
-        if (! $payment || ! $order) {
-            Log::warning("Chapa Webhook: Payment or order not found for tx_ref '{$txRef}'.");
+            if (! $payment || ! $order) {
+                Log::warning("Chapa Webhook: Payment or order not found for tx_ref '{$txRef}'.");
 
-            return response()->json([
-                'message' => 'Associated order or payment record not found.',
-            ], 404);
-        }
+                return response()->json([
+                    'message' => 'Associated order or payment record not found.',
+                ], 404);
+            }
 
-        // Idempotency: avoid re-processing already successful transactions
-        if ($payment->status === 'success' || $order->isPaid()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Payment has already been successfully processed.',
-            ]);
-        }
+            // Idempotency: avoid re-processing already successful transactions
+            if ($payment->status === 'success' || $order->isPaid()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Payment has already been successfully processed.',
+                ]);
+            }
 
-        $isSuccess = strtolower((string) ($payload['status'] ?? '')) === 'success';
+            $isSuccess = strtolower((string) ($payload['status'] ?? '')) === 'success';
 
-        DB::transaction(function () use ($payment, $order, $payload, $isSuccess) {
             $payment->update([
                 'status' => $isSuccess ? 'success' : 'failed',
                 'chapa_reference' => $payload['reference'] ?? null,
@@ -86,11 +86,11 @@ class WebhookController extends Controller
                     'status' => 'failed',
                 ]);
             }
-        });
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Webhook processed successfully.',
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Webhook processed successfully.',
+            ]);
+        });
     }
 }

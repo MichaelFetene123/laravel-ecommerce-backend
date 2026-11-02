@@ -320,3 +320,229 @@ test('ProcessPaidOrder job decrements variant stock correctly', function () {
     $variant->refresh();
     expect($variant->stock_quantity)->toBe(11);
 });
+
+test('server-to-server verification synchronizes paid order and dispatches ProcessPaidOrder', function () {
+    Queue::fake();
+
+    /** @var User $user */
+    $user = User::factory()->create();
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-SYNC-101',
+        'tx_ref' => 'TX-SYNC-101',
+        'status' => 'pending',
+        'total' => 3000.00,
+    ]);
+
+    Payment::factory()->create([
+        'order_id' => $order->id,
+        'tx_ref' => 'TX-SYNC-101',
+        'amount' => 3000.00,
+        'status' => 'initiated',
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/verify/TX-SYNC-101' => Http::response([
+            'message' => 'Payment details',
+            'status' => 'success',
+            'data' => [
+                'status' => 'success',
+                'reference' => 'CHAPA-REF-101',
+                'method' => 'telebirr',
+                'amount' => 3000.00,
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/checkout/verify', [
+        'tx_ref' => 'TX-SYNC-101',
+    ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'status' => 'success',
+            'message' => 'Payment verified successfully.',
+        ]);
+
+    $order->refresh();
+    expect($order->status)->toBe('paid')
+        ->and($order->paid_at)->not->toBeNull();
+
+    Queue::assertPushed(ProcessPaidOrder::class, function ($job) use ($order) {
+        return $job->orderId === $order->id;
+    });
+});
+
+test('server-to-server verification handles failed payment status correctly', function () {
+    Queue::fake();
+
+    /** @var User $user */
+    $user = User::factory()->create();
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'tx_ref' => 'TX-FAIL-102',
+        'status' => 'pending',
+        'total' => 1500.00,
+    ]);
+
+    Payment::factory()->create([
+        'order_id' => $order->id,
+        'tx_ref' => 'TX-FAIL-102',
+        'amount' => 1500.00,
+        'status' => 'initiated',
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/verify/TX-FAIL-102' => Http::response([
+            'message' => 'Payment details',
+            'status' => 'success',
+            'data' => [
+                'status' => 'failed',
+                'reference' => 'CHAPA-FAIL-102',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/checkout/verify', [
+        'tx_ref' => 'TX-FAIL-102',
+    ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'status' => 'failed',
+            'message' => 'Payment verification failed.',
+        ]);
+
+    $order->refresh();
+    expect($order->status)->toBe('failed');
+    Queue::assertNothingPushed();
+});
+
+test('customer can initiate payment for an existing pending order', function () {
+    /** @var User $user */
+    $user = User::factory()->create([
+        'name' => 'Sara Tesfaye',
+        'email' => 'sara@example.com',
+    ]);
+
+    $product = Product::factory()->create(['title' => 'Ethiopian Coffee Beans']);
+    $variant = ProductVariant::factory()->create([
+        'product_id' => $product->id,
+        'price' => 850.00,
+        'stock_quantity' => 20,
+    ]);
+
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-EXISTING-200',
+        'status' => 'pending',
+        'total' => 1700.00,
+    ]);
+
+    OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'quantity' => 2,
+        'unit_price_snapshot' => 850.00,
+        'line_total' => 1700.00,
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/initialize' => Http::response([
+            'status' => 'success',
+            'message' => 'Hosted Link',
+            'data' => [
+                'checkout_url' => 'https://checkout.chapa.co/checkout/payment/CHAPA-EXISTING-200',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/orders/ORD-EXISTING-200/pay', [
+        'return_url' => 'http://localhost:3000/checkout/callback',
+    ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'message' => 'Payment initialized successfully.',
+            'checkout_url' => 'https://checkout.chapa.co/checkout/payment/CHAPA-EXISTING-200',
+        ]);
+
+    $order->refresh();
+    expect($order->status)->toBe('pending');
+    assertDatabaseHas('payments', [
+        'order_id' => $order->id,
+        'status' => 'initiated',
+        'amount' => 1700.00,
+    ]);
+});
+
+test('initiating payment for already paid order fails with 422', function () {
+    /** @var User $user */
+    $user = User::factory()->create();
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-ALREADY-PAID',
+        'status' => 'paid',
+        'total' => 500.00,
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/orders/ORD-ALREADY-PAID/pay');
+    $response->assertStatus(422)
+        ->assertJson([
+            'message' => 'This order has already been paid.',
+        ]);
+});
+
+test('customer can verify payment by order_number', function () {
+    Queue::fake();
+
+    /** @var User $user */
+    $user = User::factory()->create();
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-SYNC-ORDER-NUM',
+        'tx_ref' => 'TX-SYNC-ORDER-NUM',
+        'status' => 'pending',
+        'total' => 1000.00,
+    ]);
+
+    Payment::factory()->create([
+        'order_id' => $order->id,
+        'tx_ref' => 'TX-SYNC-ORDER-NUM',
+        'status' => 'initiated',
+        'amount' => 1000.00,
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/verify/TX-SYNC-ORDER-NUM' => Http::response([
+            'message' => 'Payment details',
+            'status' => 'success',
+            'data' => [
+                'status' => 'success',
+                'reference' => 'CHAPA-REF-ORDER-NUM',
+                'method' => 'card',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/orders/ORD-SYNC-ORDER-NUM/verify');
+
+    $response->assertOk()
+        ->assertJson([
+            'status' => 'success',
+            'message' => 'Payment verified successfully.',
+        ]);
+
+    $order->refresh();
+    expect($order->status)->toBe('paid');
+});
