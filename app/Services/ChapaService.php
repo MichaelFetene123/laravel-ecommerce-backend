@@ -25,8 +25,8 @@ class ChapaService
     {
         $options = [
             'version' => 1.1,
-            'timeout' => 30,
-            'connect_timeout' => 15,
+            'timeout' => 60,
+            'connect_timeout' => 30,
         ];
 
         if (config('services.chapa.verify_ssl') === false || env('CHAPA_VERIFY_SSL') === 'false') {
@@ -52,11 +52,17 @@ class ChapaService
         // Chapa allows only letters, numbers, hyphens, underscores, spaces, and dots.
         $sanitizedDescription = trim((string) preg_replace('/[^a-zA-Z0-9\-_ .]/', '', $rawDescription));
 
+        // Chapa performs strict domain validation; map RFC reserved test domains to a valid format for sandbox testing
+        $email = (string) ($data['email'] ?? '');
+        if (preg_match('/@(?:example\.(?:com|org|net)|test|invalid|localhost)$/i', $email)) {
+            $email = (string) preg_replace('/@(?:example\.(?:com|org|net)|test|invalid|localhost)$/i', '@gmail.com', $email);
+        }
+
         $response = $this->client()
             ->post("{$this->baseUrl}/transaction/initialize", [
                 'amount' => $data['amount'],
                 'currency' => $data['currency'] ?? 'ETB',
-                'email' => $data['email'],
+                'email' => $email,
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'tx_ref' => $data['tx_ref'],

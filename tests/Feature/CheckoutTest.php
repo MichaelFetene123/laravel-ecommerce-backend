@@ -697,3 +697,114 @@ test('verification returns 404 when no reference and no pending order exists', f
             'message' => 'No transaction reference or associated order found to verify.',
         ]);
 });
+
+test('checkout succeeds with valid user billing_address_id and associates it with order', function () {
+    /** @var User $user */
+    $user = User::factory()->create();
+    $address = \App\Models\Address::factory()->create(['user_id' => $user->id]);
+
+    $category = Category::factory()->create();
+    $product = Product::factory()->create(['category_id' => $category->id]);
+    $variant = ProductVariant::factory()->create([
+        'product_id' => $product->id,
+        'price' => 500.00,
+        'stock_quantity' => 10,
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/initialize' => Http::response([
+            'status' => 'success',
+            'message' => 'Hosted Link',
+            'data' => [
+                'checkout_url' => 'https://checkout.chapa.co/checkout/payment/CHAPA-ADDR-1',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/checkout', [
+        'items' => [
+            ['product_variant_id' => $variant->id, 'quantity' => 1],
+        ],
+        'billing_address_id' => $address->id,
+        'return_url' => 'http://localhost:3000/orders/success',
+    ]);
+
+    $response->assertCreated();
+    assertDatabaseHas('orders', [
+        'user_id' => $user->id,
+        'billing_address_id' => $address->id,
+        'total' => 500.00,
+    ]);
+});
+
+test('checkout fails with 422 if billing_address_id belongs to another user', function () {
+    /** @var User $user1 */
+    $user1 = User::factory()->create();
+    /** @var User $user2 */
+    $user2 = User::factory()->create();
+    $otherUserAddress = \App\Models\Address::factory()->create(['user_id' => $user2->id]);
+
+    $category = Category::factory()->create();
+    $product = Product::factory()->create(['category_id' => $category->id]);
+    $variant = ProductVariant::factory()->create([
+        'product_id' => $product->id,
+        'price' => 500.00,
+        'stock_quantity' => 10,
+    ]);
+
+    actingAs($user1, 'sanctum');
+
+    $response = postJson('/api/checkout', [
+        'items' => [
+            ['product_variant_id' => $variant->id, 'quantity' => 1],
+        ],
+        'billing_address_id' => $otherUserAddress->id,
+        'return_url' => 'http://localhost:3000/orders/success',
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['billing_address_id']);
+});
+
+test('checkout maps dummy example.com email to valid domain for Chapa initialization', function () {
+    /** @var User $user */
+    $user = User::factory()->create([
+        'email' => 'seeded.user@example.com',
+    ]);
+
+    $category = Category::factory()->create();
+    $product = Product::factory()->create(['category_id' => $category->id]);
+    $variant = ProductVariant::factory()->create([
+        'product_id' => $product->id,
+        'price' => 1000.00,
+        'stock_quantity' => 5,
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/initialize' => Http::response([
+            'status' => 'success',
+            'message' => 'Hosted Link',
+            'data' => [
+                'checkout_url' => 'https://checkout.chapa.co/checkout/payment/CHAPA-EMAIL-TEST',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/checkout', [
+        'items' => [
+            ['product_variant_id' => $variant->id, 'quantity' => 1],
+        ],
+        'return_url' => 'http://localhost:3000/orders/success',
+    ]);
+
+    $response->assertCreated();
+
+    Http::assertSent(function ($request) {
+        return $request->url() === 'https://api.chapa.co/v1/transaction/initialize'
+            && $request['email'] === 'seeded.user@gmail.com';
+    });
+});

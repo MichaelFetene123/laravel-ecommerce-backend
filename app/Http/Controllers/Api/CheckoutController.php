@@ -44,6 +44,16 @@ class CheckoutController extends Controller
         $user = $request->user();
         $currency = strtoupper($validated['currency'] ?? 'ETB');
 
+        // Ensure billing address belongs to the authenticated user if provided
+        if (! empty($validated['billing_address_id'])) {
+            $addressBelongsToUser = $user->addresses()->where('id', $validated['billing_address_id'])->exists();
+            if (! $addressBelongsToUser) {
+                throw ValidationException::withMessages([
+                    'billing_address_id' => ['The selected address does not belong to your account.'],
+                ]);
+            }
+        }
+
         // Extract and load all requested variants
         $requestedItems = collect($validated['items']);
         $variantIds = $requestedItems->pluck('product_variant_id')->unique()->all();
