@@ -134,6 +134,15 @@ class CheckoutController extends Controller
                 ]);
 
                 // 4. Initialize Chapa Payment Gateway
+                $returnUrlWithRef = $returnUrl;
+                if (! str_contains($returnUrl, 'tx_ref=') && ! str_contains($returnUrl, 'trx_ref=')) {
+                    $separator = str_contains($returnUrl, '?') ? '&' : '?';
+                    $returnUrlWithRef .= $separator.http_build_query([
+                        'tx_ref' => $txRef,
+                        'order_number' => $order->order_number,
+                    ]);
+                }
+
                 $chapaResponse = $this->chapaService->initializePayment([
                     'amount' => $total,
                     'currency' => $currency,
@@ -141,7 +150,7 @@ class CheckoutController extends Controller
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'tx_ref' => $txRef,
-                    'return_url' => $returnUrl,
+                    'return_url' => $returnUrlWithRef,
                     'order_number' => $order->order_number,
                 ]);
 
@@ -169,19 +178,45 @@ class CheckoutController extends Controller
     public function verify(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'tx_ref' => ['required', 'string'],
+            'tx_ref' => ['nullable', 'string'],
+            'order_number' => ['nullable', 'string'],
         ]);
 
         /** @var User $user */
         $user = $request->user();
-        $txRef = $validated['tx_ref'];
+        $txRef = $validated['tx_ref'] ?? null;
+        $orderNumber = $validated['order_number'] ?? null;
 
-        $payment = Payment::where('tx_ref', $txRef)->first();
-        $order = $payment?->order ?? Order::where('tx_ref', $txRef)->first();
+        $order = null;
+        $payment = null;
 
-        if (! $order || $order->user_id !== $user->id) {
+        // 1. Resolve by explicit transaction reference
+        if ($txRef) {
+            $payment = Payment::where('tx_ref', $txRef)->first();
+            $order = $payment?->order ?? Order::where('tx_ref', $txRef)->first();
+        }
+
+        // 2. Resolve by order number
+        if (! $order && $orderNumber) {
+            $order = $user->orders()->where('order_number', $orderNumber)->first();
+            if ($order) {
+                $payment = $order->payments()->latest()->first();
+                $txRef = $order->tx_ref ?? $payment?->tx_ref;
+            }
+        }
+
+        // 3. Fallback: Resolve authenticated user's latest pending order
+        if (! $order) {
+            $order = $user->orders()->where('status', 'pending')->latest()->first();
+            if ($order) {
+                $payment = $order->payments()->latest()->first();
+                $txRef = $order->tx_ref ?? $payment?->tx_ref;
+            }
+        }
+
+        if (! $order || $order->user_id !== $user->id || ! $txRef) {
             return response()->json([
-                'message' => 'Order not found for this transaction reference.',
+                'message' => 'No transaction reference or associated order found to verify.',
             ], 404);
         }
 

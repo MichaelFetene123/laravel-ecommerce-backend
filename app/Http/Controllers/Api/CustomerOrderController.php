@@ -105,6 +105,15 @@ class CustomerOrderController extends Controller
                     'status' => 'initiated',
                 ]);
 
+                $returnUrlWithRef = $returnUrl;
+                if (! str_contains($returnUrl, 'tx_ref=') && ! str_contains($returnUrl, 'trx_ref=')) {
+                    $separator = str_contains($returnUrl, '?') ? '&' : '?';
+                    $returnUrlWithRef .= $separator.http_build_query([
+                        'tx_ref' => $txRef,
+                        'order_number' => $order->order_number,
+                    ]);
+                }
+
                 $chapaResponse = $this->chapaService->initializePayment([
                     'amount' => (float) $order->total,
                     'currency' => $order->currency,
@@ -112,7 +121,7 @@ class CustomerOrderController extends Controller
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'tx_ref' => $txRef,
-                    'return_url' => $returnUrl,
+                    'return_url' => $returnUrlWithRef,
                     'order_number' => $order->order_number,
                 ]);
 

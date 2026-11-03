@@ -551,3 +551,149 @@ test('customer can verify payment by order_number', function () {
     $order->refresh();
     expect($order->status)->toBe('paid');
 });
+
+test('checkout embeds tx_ref and order_number in return_url sent to Chapa', function () {
+    /** @var User $user */
+    $user = User::factory()->create();
+    $product = Product::factory()->create();
+    $variant = ProductVariant::factory()->create([
+        'product_id' => $product->id,
+        'price' => 500.00,
+        'stock_quantity' => 10,
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/initialize' => Http::response([
+            'status' => 'success',
+            'data' => [
+                'checkout_url' => 'https://checkout.chapa.co/checkout/payment/CHAPA-URL-PARAMS',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/checkout', [
+        'items' => [
+            ['product_variant_id' => $variant->id, 'quantity' => 1],
+        ],
+        'return_url' => 'http://localhost:3000/checkout/callback',
+    ]);
+
+    $response->assertCreated();
+    $txRef = $response->json('tx_ref');
+    $orderNumber = $response->json('order.order_number');
+
+    Http::assertSent(function ($request) use ($txRef, $orderNumber) {
+        $returnUrl = $request['return_url'] ?? '';
+        return str_contains($returnUrl, "tx_ref={$txRef}") && str_contains($returnUrl, "order_number={$orderNumber}");
+    });
+});
+
+test('verification succeeds when order_number is provided instead of tx_ref', function () {
+    Queue::fake();
+
+    /** @var User $user */
+    $user = User::factory()->create();
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-PARAM-LOOKUP',
+        'tx_ref' => 'TX-PARAM-LOOKUP',
+        'status' => 'pending',
+        'total' => 2000.00,
+    ]);
+
+    Payment::factory()->create([
+        'order_id' => $order->id,
+        'tx_ref' => 'TX-PARAM-LOOKUP',
+        'status' => 'initiated',
+        'amount' => 2000.00,
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/verify/TX-PARAM-LOOKUP' => Http::response([
+            'message' => 'Payment details',
+            'status' => 'success',
+            'data' => [
+                'status' => 'success',
+                'reference' => 'CHAPA-PARAM-LOOKUP',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    $response = postJson('/api/checkout/verify', [
+        'order_number' => 'ORD-PARAM-LOOKUP',
+    ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'status' => 'success',
+            'message' => 'Payment verified successfully.',
+        ]);
+
+    $order->refresh();
+    expect($order->status)->toBe('paid');
+});
+
+test('verification succeeds with fallback to latest pending order when no params provided', function () {
+    Queue::fake();
+
+    /** @var User $user */
+    $user = User::factory()->create();
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-FALLBACK-LATEST',
+        'tx_ref' => 'TX-FALLBACK-LATEST',
+        'status' => 'pending',
+        'total' => 1500.00,
+    ]);
+
+    Payment::factory()->create([
+        'order_id' => $order->id,
+        'tx_ref' => 'TX-FALLBACK-LATEST',
+        'status' => 'initiated',
+        'amount' => 1500.00,
+    ]);
+
+    Http::fake([
+        'https://api.chapa.co/v1/transaction/verify/TX-FALLBACK-LATEST' => Http::response([
+            'message' => 'Payment details',
+            'status' => 'success',
+            'data' => [
+                'status' => 'success',
+                'reference' => 'CHAPA-FALLBACK-REF',
+            ],
+        ], 200),
+    ]);
+
+    actingAs($user, 'sanctum');
+
+    // Neither tx_ref nor order_number provided
+    $response = postJson('/api/checkout/verify', []);
+
+    $response->assertOk()
+        ->assertJson([
+            'status' => 'success',
+            'message' => 'Payment verified successfully.',
+        ]);
+
+    $order->refresh();
+    expect($order->status)->toBe('paid');
+});
+
+test('verification returns 404 when no reference and no pending order exists', function () {
+    /** @var User $user */
+    $user = User::factory()->create();
+
+    actingAs($user, 'sanctum');
+
+    // No pending orders for user, and no reference provided
+    $response = postJson('/api/checkout/verify', []);
+
+    $response->assertStatus(404)
+        ->assertJson([
+            'message' => 'No transaction reference or associated order found to verify.',
+        ]);
+});
