@@ -18,6 +18,27 @@ class ChapaService
     }
 
     /**
+     * Get configured HTTP client instance for Chapa gateway requests.
+     * Enforces HTTP/1.1 to avoid TLS 1.3/HTTP/2 stream truncation errors with OpenSSL 3.0+.
+     */
+    protected function client()
+    {
+        $options = [
+            'version' => 1.1,
+            'timeout' => 30,
+            'connect_timeout' => 15,
+        ];
+
+        if (config('services.chapa.verify_ssl') === false || env('CHAPA_VERIFY_SSL') === 'false') {
+            $options['verify'] = false;
+        }
+
+        return Http::withToken($this->secretKey)
+            ->withOptions($options)
+            ->retry(2, 200, throw: false);
+    }
+
+    /**
      * Initialize transaction with Chapa payment gateway.
      *
      * @param  array<string, mixed>  $data
@@ -31,7 +52,7 @@ class ChapaService
         // Chapa allows only letters, numbers, hyphens, underscores, spaces, and dots.
         $sanitizedDescription = trim((string) preg_replace('/[^a-zA-Z0-9\-_ .]/', '', $rawDescription));
 
-        $response = Http::withToken($this->secretKey)
+        $response = $this->client()
             ->post("{$this->baseUrl}/transaction/initialize", [
                 'amount' => $data['amount'],
                 'currency' => $data['currency'] ?? 'ETB',
@@ -64,7 +85,7 @@ class ChapaService
      */
     public function verifyPayment(string $txRef): array
     {
-        $response = Http::withToken($this->secretKey)
+        $response = $this->client()
             ->get("{$this->baseUrl}/transaction/verify/{$txRef}");
 
         if (! $response->successful()) {
