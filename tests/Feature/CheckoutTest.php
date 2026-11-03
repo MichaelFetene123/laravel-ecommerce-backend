@@ -120,6 +120,11 @@ test('authenticated user can checkout and initialize chapa payment', function ()
         'currency' => 'ETB',
         'status' => 'initiated',
     ]);
+
+    Http::assertSent(function ($request) {
+        $description = $request['customization']['description'] ?? '';
+        return ! str_contains($description, '#') && preg_match('/^[a-zA-Z0-9\-_ .]+$/', $description);
+    });
 });
 
 test('checkout fails when requested variant quantity exceeds available stock', function () {

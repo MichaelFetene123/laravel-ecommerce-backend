@@ -27,6 +27,10 @@ class ChapaService
      */
     public function initializePayment(array $data): array
     {
+        $rawDescription = 'Payment for Order '.($data['order_number'] ?? '');
+        // Chapa allows only letters, numbers, hyphens, underscores, spaces, and dots.
+        $sanitizedDescription = trim((string) preg_replace('/[^a-zA-Z0-9\-_ .]/', '', $rawDescription));
+
         $response = Http::withToken($this->secretKey)
             ->post("{$this->baseUrl}/transaction/initialize", [
                 'amount' => $data['amount'],
@@ -39,7 +43,7 @@ class ChapaService
                 'return_url' => $data['return_url'],
                 'customization' => [
                     'title' => 'Order Payment',
-                    'description' => "Payment for Order #{$data['order_number']}",
+                    'description' => $sanitizedDescription,
                 ],
             ]);
 
