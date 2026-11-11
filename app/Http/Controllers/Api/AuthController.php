@@ -40,6 +40,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'data' => $user,
+                'user' => $user,
                 'token' => $token,
                 'token_type' => 'Bearer',
             ]);
@@ -54,6 +55,7 @@ class AuthController extends Controller
 
         return response()->json([
             'data' => $user,
+            'user' => $user,
             'message' => 'Authenticated successfully.',
         ]);
     }
@@ -86,7 +88,12 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()]);
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        return response()->json(array_merge($user->toArray(), ['data' => $user]));
     }
 
     /**
