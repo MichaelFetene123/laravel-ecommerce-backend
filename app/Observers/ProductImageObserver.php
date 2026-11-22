@@ -24,5 +24,9 @@ class ProductImageObserver
     public function deleted(ProductImage $image): void
     {
         $this->catalogCache->flushProduct($image->product_id);
+
+        if ($image->path && ! str_starts_with($image->path, 'http')) {
+            app(\App\Services\ImageUploadService::class)->delete($image->path);
+        }
     }
 }

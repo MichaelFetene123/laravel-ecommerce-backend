@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Services\CatalogCacheService;
+use App\Services\ImageUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -251,8 +252,9 @@ class AdminProductController extends Controller
 
             // Handle uploaded files
             if ($request->hasFile('image_files')) {
+                $imageService = app(ImageUploadService::class);
                 foreach ($request->file('image_files') as $file) {
-                    $storedPath = $file->store('products', 'public');
+                    $storedPath = $imageService->upload($file, 'products');
                     ProductImage::create([
                         'product_id' => $product->id,
                         'product_variant_id' => null,
@@ -374,10 +376,10 @@ class AdminProductController extends Controller
     {
         $product = Product::with('images')->findOrFail($id);
 
-        // Remove linked image files from storage disk
+        // Remove linked image files from file-based storage
         foreach ($product->images as $image) {
-            if ($image->path && ! str_starts_with($image->path, 'http')) {
-                Storage::disk('public')->delete($image->path);
+            if ($image->path) {
+                app(ImageUploadService::class)->delete($image->path);
             }
         }
 
@@ -458,7 +460,7 @@ class AdminProductController extends Controller
     /**
      * Upload one or more images for a product.
      */
-    public function uploadImages(Request $request, int $id): JsonResponse
+    public function uploadImages(Request $request, int $id, ImageUploadService $imageService): JsonResponse
     {
         $request->validate([
             'images' => ['required', 'array'],
@@ -472,11 +474,11 @@ class AdminProductController extends Controller
 
         foreach ($request->file('images') as $file) {
             $lastSortOrder++;
-            $path = $file->store('products', 'public');
+            $storedPath = $imageService->upload($file, 'products');
             $image = ProductImage::create([
                 'product_id' => $product->id,
                 'product_variant_id' => null,
-                'path' => $path,
+                'path' => $storedPath,
                 'sort_order' => $lastSortOrder,
             ]);
             $createdImages[] = $image;
@@ -491,12 +493,12 @@ class AdminProductController extends Controller
     /**
      * Delete a product image.
      */
-    public function deleteImage(int $productId, int $imageId): JsonResponse
+    public function deleteImage(int $productId, int $imageId, ImageUploadService $imageService): JsonResponse
     {
         $image = ProductImage::where('product_id', $productId)->findOrFail($imageId);
 
-        if ($image->path && ! str_starts_with($image->path, 'http')) {
-            Storage::disk('public')->delete($image->path);
+        if ($image->path) {
+            $imageService->delete($image->path);
         }
 
         $image->delete();

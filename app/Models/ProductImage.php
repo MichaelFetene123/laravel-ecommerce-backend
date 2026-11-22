@@ -16,6 +16,21 @@ class ProductImage extends Model
         'sort_order',
     ];
 
+    protected $appends = ['url'];
+
+    public function getUrlAttribute(): string
+    {
+        if (! $this->path) {
+            return '';
+        }
+
+        if (str_starts_with($this->path, 'http://') || str_starts_with($this->path, 'https://')) {
+            return $this->path;
+        }
+
+        return url($this->path);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);

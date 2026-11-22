@@ -5,6 +5,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Laravel\Sanctum\Sanctum;
 
 use function Pest\Laravel\deleteJson;
@@ -165,5 +167,67 @@ test('admin can create product without slug and system auto-generates unique slu
     $res2->assertCreated();
     expect($res2->json('data.slug'))->toBe('ipad-pro-11-inch-m4-1');
 });
+
+test('admin can upload images via file-based storage during product creation and via images endpoint', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    Sanctum::actingAs($admin);
+
+    $category = Category::factory()->create(['name' => 'Audio', 'slug' => 'audio']);
+
+    // 1. Create product with uploaded images
+    $file1 = UploadedFile::fake()->image('headphone_front.jpg', 600, 600);
+    $file2 = UploadedFile::fake()->image('headphone_side.png', 600, 600);
+
+    $response = postJson('/api/admin/products', [
+        'title' => 'Wireless ANC Headphones',
+        'category_id' => $category->id,
+        'sku' => 'ANC-HP-001',
+        'price' => 299.00,
+        'stock_quantity' => 20,
+        'image_files' => [$file1, $file2],
+    ]);
+
+    $response->assertCreated();
+    $images = $response->json('data.images');
+    expect($images)->toHaveCount(2);
+
+    $firstImagePath = $images[0]['path'];
+    expect($firstImagePath)->toStartWith('uploads/products/prod_');
+    expect(File::exists(public_path($firstImagePath)))->toBeTrue();
+    expect($images[0]['url'])->toContain($firstImagePath);
+
+    $productId = $response->json('data.id');
+    $firstImageId = $images[0]['id'];
+
+    // 2. Upload additional image to existing product
+    $file3 = UploadedFile::fake()->image('headphone_case.webp', 400, 400);
+    $uploadRes = postJson("/api/admin/products/{$productId}/images", [
+        'images' => [$file3],
+    ]);
+    $uploadRes->assertCreated();
+    $newImages = $uploadRes->json('data');
+    expect($newImages)->toHaveCount(1);
+    $newImagePath = $newImages[0]['path'];
+    expect($newImagePath)->toStartWith('uploads/products/prod_');
+    expect(File::exists(public_path($newImagePath)))->toBeTrue();
+
+    // 3. Validation: reject non-image file
+    $invalidFile = UploadedFile::fake()->create('exploit.txt', 100, 'text/plain');
+    $badRes = postJson("/api/admin/products/{$productId}/images", [
+        'images' => [$invalidFile],
+    ]);
+    $badRes->assertUnprocessable();
+
+    // 4. Delete single image and verify physical file cleanup
+    $delImageRes = deleteJson("/api/admin/products/{$productId}/images/{$firstImageId}");
+    $delImageRes->assertSuccessful();
+    expect(File::exists(public_path($firstImagePath)))->toBeFalse();
+
+    // 5. Delete entire product and verify all remaining images deleted from disk
+    $delProdRes = deleteJson("/api/admin/products/{$productId}");
+    $delProdRes->assertSuccessful();
+    expect(File::exists(public_path($newImagePath)))->toBeFalse();
+});
+
 
 
