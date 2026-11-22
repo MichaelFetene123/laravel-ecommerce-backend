@@ -21,32 +21,32 @@ class RealStorefrontCatalogSeeder extends Seeder
     }
 
     /**
-     * Seed or update categories to align with Storefront.
+     * Seed or update categories for Beauty, Personal Care, and Women's Essentials.
      *
      * @return array<string, Category>
      */
     protected function seedCategories(): array
     {
         $categories = [
-            'Fashion' => [
-                'slug' => 'fashion',
-                'description' => 'Discover the latest trends and timeless classics.',
-                'image_path' => 'categories/fashion-apparel.svg',
+            'Skincare & Cosmetics' => [
+                'slug' => 'skincare-cosmetics',
+                'description' => 'Botanical serums, hydrating moisturizers, gentle cleansers, and radiant makeup.',
+                'image_path' => 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&auto=format&fit=crop&q=80',
             ],
-            'Electronics' => [
-                'slug' => 'electronics',
-                'description' => 'Precision engineered hardware and studio accessories.',
-                'image_path' => 'categories/electronics.svg',
+            'Perfumes & Fragrances' => [
+                'slug' => 'perfumes-fragrances',
+                'description' => 'Artisanal personal fragrances, rare oud extraits, and signature floral mists.',
+                'image_path' => 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&auto=format&fit=crop&q=80',
             ],
-            'Home' => [
-                'slug' => 'home',
-                'description' => 'Thoughtful additions crafted for modern workspaces and homes.',
-                'image_path' => 'categories/home-living.svg',
+            'Bras & Intimates' => [
+                'slug' => 'bras-intimates',
+                'description' => 'Cloud-soft wireless bras, lace plunge bralettes, and seamless everyday undergarments.',
+                'image_path' => 'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=800&auto=format&fit=crop&q=80',
             ],
-            'Sports' => [
-                'slug' => 'sports',
-                'description' => 'Performance-driven equipment and lifestyle goods.',
-                'image_path' => 'categories/footwear.svg',
+            'Body Care & Lotions' => [
+                'slug' => 'body-care',
+                'description' => 'Whipped body butters, botanical body oils, and restorative moisturizing lotions.',
+                'image_path' => 'https://images.unsplash.com/photo-1608248597359-009c95d98fa7?w=800&auto=format&fit=crop&q=80',
             ],
         ];
 
@@ -66,21 +66,28 @@ class RealStorefrontCatalogSeeder extends Seeder
             $map[$name] = $cat;
         }
 
-        // Also ensure subcategories exist under them if needed
+        // Subcategories
         $subcategories = [
-            'Fashion' => [
-                "Men's Clothing" => 'mens-clothing',
-                "Women's Clothing" => 'womens-clothing',
-                'Footwear' => 'footwear',
+            'Skincare & Cosmetics' => [
+                'Serums & Treatments' => 'serums-treatments',
+                'Moisturizers & Creams' => 'moisturizers-creams',
+                'Cleansers & Toners' => 'cleansers-toners',
+                'Lip & Face Glow' => 'lip-face-glow',
             ],
-            'Electronics' => [
-                'Audio & Headphones' => 'audio-headphones',
-                'Laptops & Computers' => 'laptops-computers',
-                'Smartphones & Tablets' => 'smartphones-tablets',
+            'Perfumes & Fragrances' => [
+                'Eau de Parfum' => 'eau-de-parfum',
+                'Oud & Extraits' => 'oud-extraits',
+                'Body & Hair Mists' => 'body-hair-mists',
             ],
-            'Home' => [
-                'Kitchen Appliances' => 'kitchen-appliances',
-                'Smart Home' => 'smart-home',
+            'Bras & Intimates' => [
+                'Wireless Comfort Bras' => 'wireless-comfort-bras',
+                'Lace & Plunge Bralettes' => 'lace-plunge-bralettes',
+                'Seamless Underwear' => 'seamless-underwear',
+            ],
+            'Body Care & Lotions' => [
+                'Whipped Body Creams' => 'whipped-body-creams',
+                'Botanical Body Oils' => 'botanical-body-oils',
+                'Exfoliating Scrubs' => 'exfoliating-scrubs',
             ],
         ];
 
@@ -93,7 +100,7 @@ class RealStorefrontCatalogSeeder extends Seeder
                     [
                         'parent_id' => $parent->id,
                         'name' => $subName,
-                        'description' => "Explore {$subName}.",
+                        'description' => "Explore {$subName} essentials.",
                         'is_active' => true,
                         'sort_order' => $subSort++,
                     ]
@@ -106,7 +113,7 @@ class RealStorefrontCatalogSeeder extends Seeder
     }
 
     /**
-     * Seed attributes and values.
+     * Seed attributes and values for beauty, personal care, and intimate apparel.
      *
      * @return array<string, array<string, AttributeValue>>
      */
@@ -114,13 +121,12 @@ class RealStorefrontCatalogSeeder extends Seeder
     {
         $defs = [
             'Color' => [
-                'Black', 'Navy Blue', 'Slate Gray', 'Silver / Black', 'Gold / Brown',
-                'Chalk White', 'Charcoal Gray', 'Oatmeal Beige', 'Matte Black',
-                'Silver White', 'Space Silver', 'Space Gray', 'Matte Obsidian',
+                'Blush Rose', 'Nude / Beige', 'Midnight Black', 'Ivory White',
+                'Champagne Gold', 'Warm Amber', 'Dusty Mauve', 'Terracotta',
             ],
             'Size' => [
-                'S', 'M', 'L', 'XL', '38mm', '40mm', '40', '41', '42', '43',
-                'Standard', '13"-16" compatible', '500ml', '750ml',
+                '30ml', '50ml', '100ml', '150ml', '200ml', '250g',
+                '32B', '34B', '34C', '36B', '36C', 'S', 'M', 'L', 'XL',
             ],
         ];
 
@@ -151,7 +157,7 @@ class RealStorefrontCatalogSeeder extends Seeder
     }
 
     /**
-     * Seed real products with real image filenames and variants.
+     * Seed real beauty, personal care, fragrance, and bra products.
      *
      * @param  array<string, Category>  $categories
      * @param  array<string, array<string, AttributeValue>>  $attributes
@@ -159,304 +165,397 @@ class RealStorefrontCatalogSeeder extends Seeder
     protected function seedProducts(array $categories, array $attributes): void
     {
         $products = [
+            // 1. Skincare
             [
-                'title' => 'Premium Leather Tote',
-                'slug' => 'premium-leather-tote',
-                'category_name' => 'Fashion',
-                'description' => 'A minimalist studio-crafted premium leather tote bag. The aesthetic is highly polished, using full-grain Italian leather with reinforced stitching, ergonomic drop handles, and silver-tone hardware.',
-                'meta_title' => 'Premium Leather Tote | Handcrafted Luxury Bag',
-                'meta_description' => 'Buy handcrafted Premium Leather Tote in full-grain Italian leather with silver-tone hardware.',
+                'title' => 'Radiance Vitamin C + Niacinamide Serum',
+                'slug' => 'radiance-vitamin-c-serum',
+                'category_name' => 'Skincare & Cosmetics',
+                'description' => 'A potent, lightweight daily antioxidant serum formulated with 15% active L-Ascorbic Acid, fermented green tea, and 4% Niacinamide. Designed to brighten hyperpigmentation, smooth fine texture, and defend against urban pollution.',
+                'meta_title' => 'Radiance Vitamin C Serum | Clean Botanical Skincare',
+                'meta_description' => '15% Active Vitamin C serum with niacinamide for radiant, even-toned skin.',
                 'images' => [
-                    'products/premium-leather-tote.jpg',
-                    'products/premium-leather-tote-1.jpg',
-                    'products/premium-leather-tote-2.jpg',
-                    'products/premium-leather-tote-3.jpg',
-                    'products/premium-leather-tote-4.jpg',
+                    'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1608248597359-009c95d98fa7?w=800&auto=format&fit=crop&q=80',
                 ],
                 'variants' => [
                     [
-                        'sku' => 'LT-2024-BLK-M',
-                        'price' => 2450.00,
-                        'compare_at_price' => 2800.00,
-                        'stock_quantity' => 18,
-                        'weight' => 0.85,
+                        'sku' => 'SKIN-VTC-30ML',
+                        'price' => 1850.00,
+                        'compare_at_price' => 2200.00,
+                        'stock_quantity' => 28,
+                        'weight' => 0.15,
                         'is_default' => true,
-                        'color' => 'Black',
+                        'color' => 'Champagne Gold',
+                        'size' => '30ml',
+                    ],
+                    [
+                        'sku' => 'SKIN-VTC-50ML',
+                        'price' => 2650.00,
+                        'compare_at_price' => 2950.00,
+                        'stock_quantity' => 15,
+                        'weight' => 0.22,
+                        'is_default' => false,
+                        'color' => 'Champagne Gold',
+                        'size' => '50ml',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Hyaluronic Dew Plumping Face Cream',
+                'slug' => 'hyaluronic-dew-plumping-cream',
+                'category_name' => 'Skincare & Cosmetics',
+                'description' => 'A deeply comforting cloud cream packed with 5 molecular weights of hyaluronic acid, vegan squalane, and oat ceramides. Provides 72 hours of weightless dewy hydration without clogging pores.',
+                'meta_title' => 'Hyaluronic Dew Plumping Face Cream | Barrier Repair',
+                'meta_description' => 'Multi-molecular hyaluronic acid and ceramide face cream for supple hydration.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'SKIN-HYA-50ML',
+                        'price' => 1650.00,
+                        'compare_at_price' => 1900.00,
+                        'stock_quantity' => 24,
+                        'weight' => 0.20,
+                        'is_default' => true,
+                        'color' => 'Ivory White',
+                        'size' => '50ml',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Rosewater & Camellia Gentle Cleanser',
+                'slug' => 'rosewater-camellia-gentle-cleanser',
+                'category_name' => 'Skincare & Cosmetics',
+                'description' => 'A gentle, low-pH gel-to-milk cleanser infused with steam-distilled Damask rosewater and Japanese camellia oil. Effortlessly dissolves waterproof makeup while preserving the acid mantle.',
+                'meta_title' => 'Rosewater & Camellia Gentle Cleanser | Clean Face Wash',
+                'meta_description' => 'Hydrating low-pH rosewater cleanser for sensitive, delicate skin.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'SKIN-CLN-150ML',
+                        'price' => 1250.00,
+                        'compare_at_price' => 1450.00,
+                        'stock_quantity' => 32,
+                        'weight' => 0.25,
+                        'is_default' => true,
+                        'color' => 'Blush Rose',
+                        'size' => '150ml',
+                    ],
+                ],
+            ],
+
+            // 2. Perfumes & Fragrances
+            [
+                'title' => 'Velvet Rose & Smoked Amber Eau de Parfum',
+                'slug' => 'velvet-rose-smoked-amber-edp',
+                'category_name' => 'Perfumes & Fragrances',
+                'description' => 'An opulent floral-oriental sillage opening with fresh lychee and bergamot, melting into Bulgarian velvet rose absolute, tonka bean, and smoked golden amber.',
+                'meta_title' => 'Velvet Rose & Smoked Amber Eau de Parfum | Niche Perfume',
+                'meta_description' => 'Luxurious long-lasting eau de parfum with Bulgarian rose and smoked amber.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'FRAG-VR-50ML',
+                        'price' => 3400.00,
+                        'compare_at_price' => 3850.00,
+                        'stock_quantity' => 16,
+                        'weight' => 0.28,
+                        'is_default' => true,
+                        'color' => 'Warm Amber',
+                        'size' => '50ml',
+                    ],
+                    [
+                        'sku' => 'FRAG-VR-100ML',
+                        'price' => 4850.00,
+                        'compare_at_price' => 5400.00,
+                        'stock_quantity' => 10,
+                        'weight' => 0.45,
+                        'is_default' => false,
+                        'color' => 'Warm Amber',
+                        'size' => '100ml',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Saffron & Oud Noir Extrait de Parfum',
+                'slug' => 'saffron-oud-noir-extrait',
+                'category_name' => 'Perfumes & Fragrances',
+                'description' => 'A masterwork of artisanal perfumery featuring pure Persian red saffron, aged Cambodian oud, dark patchouli, and smoky labdanum. Unrivaled 24-hour projection.',
+                'meta_title' => 'Saffron & Oud Noir Extrait de Parfum | Rare Scent',
+                'meta_description' => 'High-concentration extrait de parfum blending Persian saffron and smoked oud.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'FRAG-OUD-50ML',
+                        'price' => 4200.00,
+                        'compare_at_price' => 4800.00,
+                        'stock_quantity' => 12,
+                        'weight' => 0.32,
+                        'is_default' => true,
+                        'color' => 'Midnight Black',
+                        'size' => '50ml',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Jasmine Blossom & Citrus Hair & Body Mist',
+                'slug' => 'jasmine-blossom-citrus-mist',
+                'category_name' => 'Perfumes & Fragrances',
+                'description' => 'An alcohol-free hydrating mist for body and hair, combining night-blooming white jasmine, sparkling Sicilian blood orange, and aloe vera hydration.',
+                'meta_title' => 'Jasmine Blossom & Citrus Mist | Hydrating Fragrance',
+                'meta_description' => 'Alcohol-free refreshing body and hair fragrance mist with jasmine and blood orange.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'FRAG-JAS-100ML',
+                        'price' => 1750.00,
+                        'compare_at_price' => 2100.00,
+                        'stock_quantity' => 25,
+                        'weight' => 0.20,
+                        'is_default' => true,
+                        'color' => 'Champagne Gold',
+                        'size' => '100ml',
+                    ],
+                ],
+            ],
+
+            // 3. Bras & Women's Intimate Essentials
+            [
+                'title' => 'Seamless Cloud-Touch Wireless Bra',
+                'slug' => 'seamless-cloud-touch-wireless-bra',
+                'category_name' => 'Bras & Intimates',
+                'description' => 'Engineered with ultra-fine microfiber and bonded jelly support ribs that lift and sculpt without underwires. Breathable molded cups disappear under thin t-shirts and silk shirts.',
+                'meta_title' => 'Seamless Cloud-Touch Wireless Bra | Daily Comfort Intimates',
+                'meta_description' => 'Second-skin wireless comfort bra with molded cups and invisible bonded edges.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1583846783214-7229a91b20ed?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'BRA-CLD-NDE-34B',
+                        'price' => 1450.00,
+                        'compare_at_price' => 1750.00,
+                        'stock_quantity' => 20,
+                        'weight' => 0.12,
+                        'is_default' => true,
+                        'color' => 'Nude / Beige',
+                        'size' => '34B',
+                    ],
+                    [
+                        'sku' => 'BRA-CLD-NDE-36C',
+                        'price' => 1450.00,
+                        'compare_at_price' => 1750.00,
+                        'stock_quantity' => 18,
+                        'weight' => 0.12,
+                        'is_default' => false,
+                        'color' => 'Nude / Beige',
+                        'size' => '36C',
+                    ],
+                    [
+                        'sku' => 'BRA-CLD-BLK-34B',
+                        'price' => 1450.00,
+                        'compare_at_price' => 1750.00,
+                        'stock_quantity' => 15,
+                        'weight' => 0.12,
+                        'is_default' => false,
+                        'color' => 'Midnight Black',
+                        'size' => '34B',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Silk Touch French Lace Plunge Bralette',
+                'slug' => 'silk-touch-french-lace-bralette',
+                'category_name' => 'Bras & Intimates',
+                'description' => 'Intricate French eyelash lace layered over 100% pure mulberry silk lining. Plunging neckline with delicate gold hardware and a flexible underbust elastic band for romantic all-day ease.',
+                'meta_title' => 'Silk Touch French Lace Plunge Bralette | Luxury Lingerie',
+                'meta_description' => 'Handcrafted French lace bralette with silk lining and plunge neckline.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'BRA-LCE-BLK-M',
+                        'price' => 1680.00,
+                        'compare_at_price' => 1950.00,
+                        'stock_quantity' => 14,
+                        'weight' => 0.08,
+                        'is_default' => true,
+                        'color' => 'Midnight Black',
                         'size' => 'M',
                     ],
                     [
-                        'sku' => 'LT-2024-NAVY-L',
-                        'price' => 2450.00,
-                        'compare_at_price' => 2800.00,
-                        'stock_quantity' => 10,
-                        'weight' => 0.85,
+                        'sku' => 'BRA-LCE-ROSE-S',
+                        'price' => 1680.00,
+                        'compare_at_price' => 1950.00,
+                        'stock_quantity' => 12,
+                        'weight' => 0.08,
                         'is_default' => false,
-                        'color' => 'Navy Blue',
-                        'size' => 'L',
-                    ],
-                    [
-                        'sku' => 'LT-2024-GRAY-S',
-                        'price' => 2450.00,
-                        'compare_at_price' => 2800.00,
-                        'stock_quantity' => 5,
-                        'weight' => 0.85,
-                        'is_default' => false,
-                        'color' => 'Slate Gray',
+                        'color' => 'Blush Rose',
                         'size' => 'S',
                     ],
                 ],
             ],
             [
-                'title' => 'Minimalist Watch',
-                'slug' => 'minimalist-watch',
-                'category_name' => 'Fashion',
-                'description' => 'Sleek, minimalist wristwatch with a genuine calfskin leather strap, Japanese quartz movement, and water resistance up to 30m.',
-                'meta_title' => 'Minimalist Watch | Japanese Quartz Wristwatch',
-                'meta_description' => 'Sleek, minimalist wristwatch with genuine leather strap and Japanese quartz movement.',
+                'title' => 'Ergonomic Support Wirefree T-Shirt Bra',
+                'slug' => 'ergonomic-support-wirefree-tshirt-bra',
+                'category_name' => 'Bras & Intimates',
+                'description' => 'Full-coverage everyday bra tailored with moisture-wicking modal fabric, wide cushioned straps that never dig into shoulders, and smooth side-smoothing panels.',
+                'meta_title' => 'Ergonomic Support Wirefree T-Shirt Bra | Everyday Essentials',
+                'meta_description' => 'Full-coverage wirefree t-shirt bra with cushioned straps and modal fabric.',
                 'images' => [
-                    'products/minimalist-watch.jpg',
+                    'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=800&auto=format&fit=crop&q=80',
                 ],
                 'variants' => [
                     [
-                        'sku' => 'WT-1090-SIL-40',
-                        'price' => 1890.00,
-                        'compare_at_price' => 2100.00,
-                        'stock_quantity' => 12,
-                        'weight' => 0.15,
+                        'sku' => 'BRA-TSH-NDE-36B',
+                        'price' => 1350.00,
+                        'compare_at_price' => 1600.00,
+                        'stock_quantity' => 22,
+                        'weight' => 0.14,
                         'is_default' => true,
-                        'color' => 'Silver / Black',
-                        'size' => '40mm',
-                    ],
-                    [
-                        'sku' => 'WT-1090-GLD-38',
-                        'price' => 1890.00,
-                        'compare_at_price' => 2100.00,
-                        'stock_quantity' => 8,
-                        'weight' => 0.15,
-                        'is_default' => false,
-                        'color' => 'Gold / Brown',
-                        'size' => '38mm',
+                        'color' => 'Nude / Beige',
+                        'size' => '36B',
                     ],
                 ],
             ],
+
+            // 4. Body Care & Lotions
             [
-                'title' => 'Classic White Sneakers',
-                'slug' => 'classic-white-sneakers',
-                'category_name' => 'Fashion',
-                'description' => 'Crisp, handmade white designer sneakers engineered with memory foam cushioning and durable vulcanized rubber soles.',
-                'meta_title' => 'Classic White Sneakers | Handmade Designer Shoes',
-                'meta_description' => 'Handmade white designer sneakers with memory foam cushioning and vulcanized soles.',
+                'title' => 'Whipped Shea & Vanilla Cashmere Body Butter',
+                'slug' => 'whipped-shea-vanilla-body-butter',
+                'category_name' => 'Body Care & Lotions',
+                'description' => 'Hand-whipped raw Ethiopian and Ghanaian shea butter blended with cold-pressed jojoba, sweet almond oil, and Bourbon vanilla. Melts on contact to restore velvety softness to dry elbows, legs, and hands.',
+                'meta_title' => 'Whipped Shea & Vanilla Body Butter | Deep Moisture Crème',
+                'meta_description' => 'Decadent whipped body crème with organic shea butter and Madagascar vanilla.',
                 'images' => [
-                    'products/classic-white-sneakers.jpg',
+                    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
                 ],
                 'variants' => [
                     [
-                        'sku' => 'SN-3200-WHT-42',
-                        'price' => 3200.00,
-                        'compare_at_price' => 3600.00,
-                        'stock_quantity' => 3,
-                        'weight' => 0.90,
-                        'is_default' => true,
-                        'color' => 'Chalk White',
-                        'size' => '42',
-                    ],
-                    [
-                        'sku' => 'SN-3200-WHT-41',
-                        'price' => 3200.00,
-                        'compare_at_price' => 3600.00,
-                        'stock_quantity' => 5,
-                        'weight' => 0.90,
-                        'is_default' => false,
-                        'color' => 'Chalk White',
-                        'size' => '41',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Cashmere Blend Sweater',
-                'slug' => 'cashmere-blend-sweater',
-                'category_name' => 'Fashion',
-                'description' => 'Ultra-soft knitted crewneck sweater woven from a premium cashmere and merino wool blend for lightweight warmth.',
-                'meta_title' => 'Cashmere Blend Sweater | Mongolian Cashmere Knit',
-                'meta_description' => 'Ultra-soft crewneck sweater woven from Mongolian cashmere and merino wool blend.',
-                'images' => [
-                    'products/cashmere-blend-sweater.jpg',
-                ],
-                'variants' => [
-                    [
-                        'sku' => 'SW-4150-CHAR-M',
-                        'price' => 4150.00,
-                        'compare_at_price' => 4500.00,
-                        'stock_quantity' => 14,
-                        'weight' => 0.40,
-                        'is_default' => true,
-                        'color' => 'Charcoal Gray',
-                        'size' => 'M',
-                    ],
-                    [
-                        'sku' => 'SW-4150-OAT-L',
-                        'price' => 4150.00,
-                        'compare_at_price' => 4500.00,
-                        'stock_quantity' => 9,
-                        'weight' => 0.40,
-                        'is_default' => false,
-                        'color' => 'Oatmeal Beige',
-                        'size' => 'L',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Aura Studio Pro Headphones',
-                'slug' => 'aura-studio-pro-headphones',
-                'category_name' => 'Electronics',
-                'description' => 'High-fidelity wireless studio headphones featuring active noise cancellation, custom 40mm titanium drivers, and 35-hour battery life.',
-                'meta_title' => 'Aura Studio Pro Headphones | Wireless ANC Studio Audio',
-                'meta_description' => 'High-fidelity wireless studio headphones with active noise cancellation and 35-hour battery.',
-                'images' => [
-                    'products/aura-studio-pro-headphones.jpg',
-                ],
-                'variants' => [
-                    [
-                        'sku' => 'HP-1800-BLK',
-                        'price' => 1800.00,
-                        'compare_at_price' => 2200.00,
-                        'stock_quantity' => 25,
-                        'weight' => 0.28,
-                        'is_default' => true,
-                        'color' => 'Matte Black',
-                        'size' => 'Standard',
-                    ],
-                    [
-                        'sku' => 'HP-1800-SLV',
-                        'price' => 1800.00,
-                        'compare_at_price' => 2200.00,
-                        'stock_quantity' => 15,
-                        'weight' => 0.28,
-                        'is_default' => false,
-                        'color' => 'Silver White',
-                        'size' => 'Standard',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Ergo Lift Aluminum Stand',
-                'slug' => 'ergo-lift-aluminum-stand',
-                'category_name' => 'Electronics',
-                'description' => 'Precision CNC-machined aerospace-grade aluminum laptop riser with thermal ventilation and silicone anti-slip grip pads.',
-                'meta_title' => 'Ergo Lift Aluminum Stand | Ergonomic Laptop Riser',
-                'meta_description' => 'CNC-machined aluminum laptop riser with thermal ventilation and non-slip pads.',
-                'images' => [
-                    'products/ergo-lift-aluminum-stand.jpg',
-                ],
-                'variants' => [
-                    [
-                        'sku' => 'ST-0089-SLV',
-                        'price' => 890.00,
-                        'compare_at_price' => 1100.00,
-                        'stock_quantity' => 40,
-                        'weight' => 0.46,
-                        'is_default' => true,
-                        'color' => 'Space Silver',
-                        'size' => '13"-16" compatible',
-                    ],
-                    [
-                        'sku' => 'ST-0089-GRY',
-                        'price' => 890.00,
-                        'compare_at_price' => 1100.00,
-                        'stock_quantity' => 20,
-                        'weight' => 0.46,
-                        'is_default' => false,
-                        'color' => 'Space Gray',
-                        'size' => '13"-16" compatible',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Smart Water Bottle',
-                'slug' => 'smart-water-bottle',
-                'category_name' => 'Home',
-                'description' => 'Double-walled vacuum insulated stainless steel smart water bottle with LED touch temperature display and 24h cold retention.',
-                'meta_title' => 'Smart Water Bottle | Insulated Temperature Display',
-                'meta_description' => 'Vacuum insulated smart water bottle with LED touch temperature cap and 24h cold retention.',
-                'images' => [
-                    'products/smart-water-bottle.jpg',
-                ],
-                'variants' => [
-                    [
-                        'sku' => 'WB-0650-OBS-500',
-                        'price' => 650.00,
-                        'compare_at_price' => 800.00,
-                        'stock_quantity' => 30,
+                        'sku' => 'BODY-SHEA-250G',
+                        'price' => 980.00,
+                        'compare_at_price' => 1200.00,
+                        'stock_quantity' => 45,
                         'weight' => 0.35,
                         'is_default' => true,
-                        'color' => 'Matte Obsidian',
-                        'size' => '500ml',
+                        'color' => 'Ivory White',
+                        'size' => '250g',
                     ],
+                ],
+            ],
+            [
+                'title' => 'Botanical Radiance Restorative Body Oil',
+                'slug' => 'botanical-radiance-body-oil',
+                'category_name' => 'Body Care & Lotions',
+                'description' => 'A fast-absorbing, dry-touch body elixir formulated with cold-pressed rosehip, Kalahari melon seed, and golden jojoba oils. Infuses skin with a satin luminosity and subtle hints of neroli blossom.',
+                'meta_title' => 'Botanical Radiance Restorative Body Oil | Satin Glow Elixir',
+                'meta_description' => 'Illuminating dry body oil with rosehip and marula for radiant skin.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1608248597359-009c95d98fa7?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
                     [
-                        'sku' => 'WB-0650-OBS-750',
-                        'price' => 750.00,
-                        'compare_at_price' => 900.00,
-                        'stock_quantity' => 15,
-                        'weight' => 0.45,
-                        'is_default' => false,
-                        'color' => 'Matte Obsidian',
-                        'size' => '750ml',
+                        'sku' => 'BODY-OIL-150ML',
+                        'price' => 1250.00,
+                        'compare_at_price' => 1500.00,
+                        'stock_quantity' => 30,
+                        'weight' => 0.24,
+                        'is_default' => true,
+                        'color' => 'Champagne Gold',
+                        'size' => '150ml',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Crushed Coffee & Cocoa Polishing Body Scrub',
+                'slug' => 'crushed-coffee-cocoa-body-scrub',
+                'category_name' => 'Body Care & Lotions',
+                'description' => 'Freshly roasted Sidama coffee beans, organic brown sugar, and raw cocoa butter work synergistically to buff away dull skin cells, stimulate circulation, and leave skin irresistibly silky.',
+                'meta_title' => 'Crushed Coffee & Cocoa Body Scrub | Natural Exfoliator',
+                'meta_description' => 'Natural exfoliating body polish with Ethiopian coffee and raw cocoa butter.',
+                'images' => [
+                    'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&auto=format&fit=crop&q=80',
+                ],
+                'variants' => [
+                    [
+                        'sku' => 'BODY-SCRUB-250G',
+                        'price' => 890.00,
+                        'compare_at_price' => 1100.00,
+                        'stock_quantity' => 35,
+                        'weight' => 0.35,
+                        'is_default' => true,
+                        'color' => 'Terracotta',
+                        'size' => '250g',
                     ],
                 ],
             ],
         ];
 
-        foreach ($products as $pData) {
-            $cat = $categories[$pData['category_name']] ?? $categories['Fashion'];
+        foreach ($products as $data) {
+            $cat = $categories[$data['category_name']];
 
+            /** @var Product $product */
             $product = Product::updateOrCreate(
-                ['slug' => $pData['slug']],
+                ['slug' => $data['slug']],
                 [
                     'category_id' => $cat->id,
-                    'title' => $pData['title'],
-                    'description' => $pData['description'],
-                    'meta_title' => $pData['meta_title'],
-                    'meta_description' => $pData['meta_description'],
+                    'title' => $data['title'],
+                    'description' => $data['description'],
                     'is_active' => true,
+                    'meta_title' => $data['meta_title'],
+                    'meta_description' => $data['meta_description'],
                 ]
             );
 
-            // Seed images
-            ProductImage::where('product_id', $product->id)->delete();
-            $sortOrder = 0;
-            foreach ($pData['images'] as $imgRelPath) {
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'product_variant_id' => null,
-                    'path' => $imgRelPath,
-                    'sort_order' => $sortOrder++,
-                ]);
+            // Images
+            foreach ($data['images'] as $sortIdx => $imgUrl) {
+                ProductImage::updateOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'path' => $imgUrl,
+                    ],
+                    [
+                        'sort_order' => $sortIdx + 1,
+                    ]
+                );
             }
 
-            // Seed variants
-            foreach ($pData['variants'] as $vData) {
+            // Variants
+            foreach ($data['variants'] as $vData) {
                 $variant = ProductVariant::updateOrCreate(
                     ['sku' => $vData['sku']],
                     [
                         'product_id' => $product->id,
                         'price' => $vData['price'],
-                        'compare_at_price' => $vData['compare_at_price'],
+                        'compare_at_price' => $vData['compare_at_price'] ?? null,
                         'stock_quantity' => $vData['stock_quantity'],
                         'weight' => $vData['weight'],
                         'is_default' => $vData['is_default'],
                     ]
                 );
 
-                $pivotIds = [];
-                if (isset($vData['color']) && isset($attributes['Color'][$vData['color']])) {
-                    $pivotIds[] = $attributes['Color'][$vData['color']]->id;
-                }
-                if (isset($vData['size']) && isset($attributes['Size'][$vData['size']])) {
-                    $pivotIds[] = $attributes['Size'][$vData['size']]->id;
+                // Attach Color attribute
+                if (!empty($vData['color']) && isset($attributes['Color'][$vData['color']])) {
+                    $attrVal = $attributes['Color'][$vData['color']];
+                    $variant->attributeValues()->syncWithoutDetaching([$attrVal->id]);
                 }
 
-                if (! empty($pivotIds)) {
-                    $variant->attributeValues()->sync(array_values(array_unique($pivotIds)));
+                // Attach Size attribute
+                if (!empty($vData['size']) && isset($attributes['Size'][$vData['size']])) {
+                    $attrVal = $attributes['Size'][$vData['size']];
+                    $variant->attributeValues()->syncWithoutDetaching([$attrVal->id]);
                 }
             }
         }
