@@ -162,7 +162,7 @@ class AdminProductController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:products,slug'],
+            'slug' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
@@ -191,10 +191,15 @@ class AdminProductController extends Controller
         ]);
 
         $product = DB::transaction(function () use ($validated, $request) {
-            // Generate slug if omitted
+            // Generate slug if omitted, or sanitize provided slug
             $slug = ! empty($validated['slug'])
                 ? Str::slug($validated['slug'])
                 : Str::slug($validated['title']);
+
+            // Fallback if slug becomes empty (e.g. non-latin / special characters only)
+            if (empty($slug)) {
+                $slug = 'product-' . time();
+            }
 
             // Ensure unique slug
             $originalSlug = $slug;
@@ -279,7 +284,7 @@ class AdminProductController extends Controller
 
         $validated = $request->validate([
             'title' => ['sometimes', 'required', 'string', 'max:255'],
-            'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('products', 'slug')->ignore($product->id)],
+            'slug' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('products', 'slug')->ignore($product->id)],
             'category_id' => ['sometimes', 'required', 'integer', 'exists:categories,id'],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],

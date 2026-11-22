@@ -137,3 +137,33 @@ test('admin can create, update, toggle, and delete a product', function () {
     expect(Product::find($productId))->toBeNull();
 });
 
+test('admin can create product without slug and system auto-generates unique slug', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    Sanctum::actingAs($admin);
+
+    $category = Category::factory()->create(['name' => 'Tablets', 'slug' => 'tablets']);
+
+    // 1. Create product without providing a slug
+    $res1 = postJson('/api/admin/products', [
+        'title' => 'iPad Pro 11 Inch M4',
+        'category_id' => $category->id,
+        'sku' => 'IPAD-PRO-11-M4',
+        'price' => 999.00,
+        'stock_quantity' => 15,
+    ]);
+    $res1->assertCreated();
+    expect($res1->json('data.slug'))->toBe('ipad-pro-11-inch-m4');
+
+    // 2. Create another product with the identical title; system auto-handles collision with unique suffix
+    $res2 = postJson('/api/admin/products', [
+        'title' => 'iPad Pro 11 Inch M4',
+        'category_id' => $category->id,
+        'sku' => 'IPAD-PRO-11-M4-CELL',
+        'price' => 1199.00,
+        'stock_quantity' => 10,
+    ]);
+    $res2->assertCreated();
+    expect($res2->json('data.slug'))->toBe('ipad-pro-11-inch-m4-1');
+});
+
+
