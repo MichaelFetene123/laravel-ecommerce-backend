@@ -34,6 +34,7 @@ class AddressController extends Controller
             'country' => ['required', 'string', 'max:100'],
             'postal_code' => ['nullable', 'string', 'max:20'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'phone2' => ['nullable', 'string', 'max:30'],
         ]);
 
         /** @var User $user */

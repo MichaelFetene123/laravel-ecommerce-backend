@@ -19,6 +19,7 @@ class Address extends Model
         'country',
         'postal_code',
         'phone',
+        'phone2',
     ];
 
     public function user()
