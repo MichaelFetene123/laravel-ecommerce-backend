@@ -30,9 +30,6 @@ class AddressController extends Controller
             'line1' => ['required', 'string', 'max:255'],
             'line2' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:100'],
-            'region' => ['nullable', 'string', 'max:100'],
-            'country' => ['required', 'string', 'max:100'],
-            'postal_code' => ['nullable', 'string', 'max:20'],
             'phone' => ['nullable', 'string', 'max:30'],
             'phone2' => ['nullable', 'string', 'max:30'],
         ]);

@@ -9,15 +9,16 @@ class Address extends Model
 {
     use HasFactory;
 
+    protected $attributes = [
+        'country' => 'Ethiopia',
+    ];
+
     protected $fillable = [
         'user_id',
         'full_name',
         'line1',
         'line2',
         'city',
-        'region',
-        'country',
-        'postal_code',
         'phone',
         'phone2',
     ];

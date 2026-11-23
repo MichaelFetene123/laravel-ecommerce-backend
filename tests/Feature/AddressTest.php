@@ -57,10 +57,7 @@ test('authenticated user can store a new address', function () {
         'full_name' => 'Abebe Bikila',
         'line1' => 'Bole Subcity, Woreda 03',
         'line2' => 'House No. 123',
-        'city' => 'Addis Ababa',
-        'region' => 'Addis Ababa',
-        'country' => 'Ethiopia',
-        'postal_code' => '1000',
+        'city' => 'Arba Minch',
         'phone' => '+251911223344',
     ];
 
@@ -71,7 +68,7 @@ test('authenticated user can store a new address', function () {
             'user_id' => $user->id,
             'full_name' => 'Abebe Bikila',
             'line1' => 'Bole Subcity, Woreda 03',
-            'city' => 'Addis Ababa',
+            'city' => 'Arba Minch',
             'country' => 'Ethiopia',
         ]);
 
@@ -85,5 +82,5 @@ test('storing an address validates required fields', function () {
     $response = postJson('/api/addresses', []);
 
     $response->assertUnprocessable()
-        ->assertJsonValidationErrors(['full_name', 'line1', 'city', 'country']);
+        ->assertJsonValidationErrors(['full_name', 'line1', 'city']);
 });
