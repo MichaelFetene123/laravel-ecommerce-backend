@@ -46,7 +46,7 @@ class RealStorefrontCatalogSeeder extends Seeder
             'Body Care & Lotions' => [
                 'slug' => 'body-care',
                 'description' => 'Whipped body butters, botanical body oils, and restorative moisturizing lotions.',
-                'image_path' => 'https://images.unsplash.com/photo-1608248597359-009c95d98fa7?w=800&auto=format&fit=crop&q=80',
+                'image_path' => 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&auto=format&fit=crop&q=80',
             ],
         ];
 
@@ -175,7 +175,7 @@ class RealStorefrontCatalogSeeder extends Seeder
                 'meta_description' => '15% Active Vitamin C serum with niacinamide for radiant, even-toned skin.',
                 'images' => [
                     'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80',
-                    'https://images.unsplash.com/photo-1608248597359-009c95d98fa7?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&auto=format&fit=crop&q=80',
                 ],
                 'variants' => [
                     [
@@ -463,7 +463,7 @@ class RealStorefrontCatalogSeeder extends Seeder
                 'meta_title' => 'Botanical Radiance Restorative Body Oil | Satin Glow Elixir',
                 'meta_description' => 'Illuminating dry body oil with rosehip and marula for radiant skin.',
                 'images' => [
-                    'https://images.unsplash.com/photo-1608248597359-009c95d98fa7?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&auto=format&fit=crop&q=80',
                 ],
                 'variants' => [
                     [
